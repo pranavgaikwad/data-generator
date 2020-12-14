@@ -1,0 +1,18 @@
+number_of_files: 1
+
+# size of the file in 'M' 
+# corresponds with the container env var FILE_SIZE
+file_size: 1560Gi
+
+max_files: 100000
+
+min_files: 50000
+
+# size of the PVCs to be created to store sample files
+pvc_size: 2Ti
+
+namespace: pvc-migrate-bmark
+
+image: quay.io/pranavgaikwad/data-generator:latest
+
+destroy: false
