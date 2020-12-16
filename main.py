@@ -24,17 +24,16 @@ def create_random_files(total_size: int, min_files: int, max_files: int, dest: s
     loop_breaker = deque(10*[random.randrange(1, 100000)], maxlen=10)
     total_created = 0
     while (int(total_size) > 0) and (total_created <= max_files):
-        isLastFile = lambda created, total: True if (total-created==1) else False
-        total_remaining = max(min_files - total_created, 0)
-        max_size = int(total_size / total_remaining) if total_remaining != 0 else total_size
+        total_remaining = max(min_files - total_created, 1)
+        max_size = int(total_size / total_remaining)
         if max_size < 2:
             break
-        current_file_size = total_size if isLastFile(total_created, max_files) else random.randrange(1, max_size)
+        current_file_size = total_size if (max_files - total_created==1) else random.randrange(1, max_size)
         current_file_name = ''.join(random.choice(string.ascii_lowercase) for i in range(random.randrange(4, 10)))
         current_file_path = "{directory}/{file_name}".format(directory=dest, file_name=current_file_name)
         rc = create_binary_file(int(current_file_size), current_file_path)
-        total_created += 1 if rc == 0 else 0
-        total_size -= current_file_size if rc == 0 else 0
+        total_created += (1 + rc)
+        total_size -= (current_file_size + (current_file_size*rc))
         loop_breaker.append(total_size)
         # break loop if last 10 values have been consistently same, indicates problem creating files
         xor_result = 0
