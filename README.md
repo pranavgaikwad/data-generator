@@ -39,6 +39,11 @@ It uses following command line arguments:
 
 In some of the file operations, the program may create additional data in existing files. `--buffer` option allows setting an upper limit on the additional data created by the program. 
 
+To pause the file operations, you can create a file named `__pause__` in `--dest-dir`. Once created, the file operations will be paused. They will be resumed as soon as the file is deleted.
+
+```sh
+touch <dest_dir>/__pause__
+```
 
 ## Deploy on Kubernetes
 

@@ -4,7 +4,16 @@
   vars_files:
   - ./default.yml
   tasks:
-  - name: "{{ 'Deleting benchmark app' if destroy|bool else 'Creating benchmark app' }}"
+  - name: "{{ 'Deleting workload namespace' if destroy|bool else 'Creating workload namespace' }}"
     k8s:
       state: "{{ 'absent' if destroy|bool else 'present' }}"
+      definition: "{{ lookup('template', './ns.yml.j2') }}"
+
+  - pause:
+      seconds: 5
+
+  - name: "Deploying workload"
+    k8s:
+      state: present
       definition: "{{ lookup('template', './manifest.yml.j2') }}"
+    when: not destroy|bool

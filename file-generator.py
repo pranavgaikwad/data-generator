@@ -23,6 +23,7 @@ def write_to_file(data: bytes, path: str, mode: str) -> int:
     try:
         with open(path, mode) as f:
             f.write(data)
+        print("Created file {} of size {}".format(path, to_si(len(data))))
     except Exception as e:
         print("Failed writing file {}".format(str(e)))
         return -1
@@ -74,6 +75,11 @@ def validate_size(size: str) -> bool:
         raise ValueError
     return size
 
+def scan(dest: str) -> (int, int):
+    files = [os.path.join(dest, f) for f in os.listdir(dest) if os.path.isfile(os.path.join(dest, f))]
+    size = sum(os.path.getsize(f) for f in files)
+    return size, len(files)
+
 def in_bytes(number: int, unit: str) -> int:
     base = 1000
     exponent = UNITS.index(unit) if UNITS.index(unit) != -1 else 1
@@ -100,6 +106,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
     size, unit =  re.match(r'(\d+)(\w+)', args.size)[1], re.match(r'(\d+)(\w+)', args.size)[2]
     size_in_bytes = in_bytes(int(size), unit)
-    created = create_random_files(size_in_bytes, args.min_files, args.max_files, args.dest_dir)
+    occupied_size, occupied_files = scan(args.dest_dir)
+    new_min_files = max(0, args.min_files - occupied_files)
+    new_max_files = max(0, args.max_files - occupied_files)
+    new_size = max(0, size_in_bytes-occupied_size)
+    print("Destination directory contains {} files of {} size".format(occupied_files, to_si(occupied_size)))
+    created = create_random_files(new_size, new_min_files, new_max_files, args.dest_dir)
     print("Created {} random files".format(created))
 

@@ -45,14 +45,14 @@ class FileOperations(object):
     def scan(self):
         """ scans self.dir to create list of files """
         ok("Scanning directory {}".format(self.dir))
-        self.files = {}
-        for f in os.listdir(self.dir):
-            if isfile(join(self.dir, f)):
-                try:
-                    self.mutex.acquire()
+        try:
+            self.files = {}
+            self.mutex.acquire()
+            for f in os.listdir(self.dir):
+                if isfile(join(self.dir, f)):
                     self.files[join(self.dir, f)] = True
-                finally:
-                    self.mutex.release()
+        finally:
+            self.mutex.release()
 
     def update_altered_bytes(self, delta):
         try:
@@ -60,21 +60,44 @@ class FileOperations(object):
             self.altered_bytes += delta
         finally:
             self.mutex.release()
+
+    def _get_file_list(self) -> dict:
+        files = {}
+        try:
+            self.mutex.acquire()
+            files = self.files
+        finally:
+            self.mutex.release()
+        return files
+
+    def _delete_from_file_list(self, path: str):
+        try:
+            self.mutex.acquire()
+            del self.files[path]
+        finally:
+            self.mutex.release()
+    
+    def _add_to_file_list(self, path: str):
+        try:
+            self.mutex.acquire()
+            self.files[path] = True
+        finally:
+            self.mutex.release()
         
     def _get_random_operation(self):
         return random.randint(1, 6)
 
     def perform_random_operation(self) -> int:
-        if len(self.files) < 1:
+        if len(self._get_file_list().keys()) < 1:
             warn("Directory is empty or not scanned")
             return -1
-        if join(self.dir, PAUSE_SWITCH) in self.files:
+        if join(self.dir, PAUSE_SWITCH) in self._get_file_list():
             warn("Pause switch present in the directory. Pausing until it's removed...")
             return 0
         return self._perform(self._get_random_operation())
 
     def _perform(self, opcode: int) -> int:
-        path = random.choice(list(self.files.keys()))
+        path = random.choice(list(self._get_file_list().keys()))
         return {
             '1': self._read,
             '2': self._write,
@@ -91,7 +114,7 @@ class FileOperations(object):
                 f.read()
             ok("Read file {}".format(path))
         except FileNotFoundError:
-            del self.files[path]
+            self._delete_from_file_list(path)
             return -1
         except Exception as e:
             err("Failed reading {} {}".format(path, str(e)))
@@ -126,7 +149,7 @@ class FileOperations(object):
         data = self._generate_random_bytes(size)
         rc = self._write_to_file(data, path, "wb+")
         self.update_altered_bytes((1+rc)*size)
-        self.files[path] = True
+        self._add_to_file_list(path)
         if rc == 0:
             ok("Created new file {} of size {}".format(path, to_si(size)))
         return rc
@@ -139,7 +162,7 @@ class FileOperations(object):
         data = self._generate_random_bytes(size)
         rc = self._write_to_file(data, path, "ab+")
         self.update_altered_bytes((1+rc)*size)
-        self.files[path] = True
+        self._add_to_file_list(path)
         if rc == 0:
             ok("Appended {} of data to {}".format(to_si(size), path))
         return rc
@@ -152,7 +175,7 @@ class FileOperations(object):
             size = os.path.getsize(path)
             os.remove(path)
             self.update_altered_bytes(-1*size)
-            del self.files[path]
+            self._delete_from_file_list(path)
             ok("Deleted file {}".format(path))
         except Exception as e:
             err("Failed deleting file {} {}".format(path, str(e)))
@@ -165,7 +188,7 @@ class FileOperations(object):
             return 0
         size = random.randint(1, os.path.getsize(path))
         try:
-            file_name = ''.join(random.choice(string.ascii_lowercase) for i in range(random.randrange(10, 20)))
+            file_name = join(self.dir, ''.join(random.choice(string.ascii_lowercase) for i in range(random.randrange(10, 20))))
             with open(path, 'rb') as in_file:
                 with open(file_name, 'wb') as out_file:
                     out_file.write(in_file.read()[size:])
@@ -224,7 +247,7 @@ def is_unit_supported(unit: str) -> bool:
 
 def scanner(fileOps: FileOperations):
     while True:
-        time.sleep(10)
+        time.sleep(30)
         ok("[Scanner] Scanning destination directory")
         fileOps.scan()
 
@@ -238,7 +261,6 @@ def operator(fileOps: FileOperations):
             currentExp += 1
         else:
             currentExp /= 2
-
 
 def is_si_size_valid(size: str) -> bool:
     try: 
