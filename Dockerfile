@@ -1,10 +1,9 @@
-FROM python:3.8
+FROM centos/python-36-centos7:latest
 
-COPY main.py /usr/local/bin/file-generator
+COPY file-generator.py /usr/local/bin/file-generator
+
+COPY file-operations.py /usr/local/bin/file-operations
 
 COPY entrypoint.sh /usr/local/bin/entrypoint
 
-RUN chmod +x /usr/local/bin/entrypoint /usr/local/bin/file-generator
-
 CMD /usr/local/bin/entrypoint
-

@@ -3,12 +3,11 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: {{ namespace }}
-{% for i in range(number_of_files|int) %}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: "pvc-{{ i }}"
+  name: "pvc-0"
   namespace: {{ namespace }}
 spec:
   accessModes:
@@ -16,35 +15,41 @@ spec:
   resources:
     requests:
       storage: {{ pvc_size }}
-{% endfor %}
 ---
 apiVersion: v1
 kind: Pod
 metadata:
-  name: pvc-migrate-bmark
+  name: {{ pod_name }}
   namespace: {{ namespace }}
 spec:
   volumes:
-{% for i in range(number_of_files|int) %}
-  - name: "vol-{{ i }}" 
+  - name: "vol-0" 
     persistentVolumeClaim:
-      claimName: "pvc-{{ i }}"
-{% endfor %}
+      claimName: "pvc-0"
   containers:
-  - name: data-gen-bmark
+  - name: data-generator
     imagePullPolicy: Always
     image: {{ image }}
     volumeMounts:
-{% for i in range(number_of_files|int) %}
-    - mountPath: "/opt/mounts/mnt{{ i+1 }}"
-      name: "vol-{{ i }}"
-{% endfor %}
+    - mountPath: "/opt/mounts/mnt1"
+      name: "vol-0"
     env:
     - name: MAX_FILES
       value: "{{ max_files }}"
     - name: MIN_FILES
       value: "{{ min_files }}"
-    - name: NO_OF_MOUNTS
-      value: "{{ number_of_files }}"
-    - name: SIZE_EACH_MOUNT
+    - name: SIZE
       value: "{{ file_size }}"
+    - name: ROLE
+      value: generator
+  - name: data-operator
+    imagePullPolicy: Always
+    image: {{ image }}
+    volumeMounts:
+    - mountPath: "/opt/mounts/mnt1"
+      name: "vol-0"
+    env:
+    - name: BUFFER
+      value: "{{ buffer }}"
+    - name: ROLE
+      value: operator

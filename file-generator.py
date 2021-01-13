@@ -11,14 +11,31 @@ from collections import deque
 UNITS = ["b", "Ki", "Mi", "Gi", "Ti"]
 
 def create_binary_file(size: int, path: str, mode: str = "wb+") -> int:
+    generated_size = 0
+    data = b''
+    while generated_size < size:
+        generated_size = random.randint(min(size-generated_size, 10), size-generated_size)
+        data += os.urandom(generated_size) + bytes("\n", encoding='utf8')
+        generated_size += generated_size
+    return write_to_file(data, path, mode)
+
+def write_to_file(data: bytes, path: str, mode: str) -> int:
     try:
         with open(path, mode) as f:
-            f.write(os.urandom(size))
-        print("Created file {filename} of size {size} bytes".format(filename=path, size=size))
+            f.write(data)
     except Exception as e:
         print("Failed writing file {}".format(str(e)))
         return -1
-    return 0
+    return 0 
+
+def read_from_file(path: str) -> str:
+    data = ""
+    try:
+        with open(path, "r") as f:
+            data = f.read()
+    except Exception as e:
+        print("Failed reading file {}".format(str(e)))
+    return data
 
 def create_random_files(total_size: int, min_files: int, max_files: int, dest: str) -> int:
     loop_breaker = deque(10*[random.randrange(1, 100000)], maxlen=10)
@@ -34,6 +51,7 @@ def create_random_files(total_size: int, min_files: int, max_files: int, dest: s
         rc = create_binary_file(int(current_file_size), current_file_path)
         total_created += (1 + rc)
         total_size -= (current_file_size + (current_file_size*rc))
+        print("Remaining size {}".format(to_si(int(total_size))))
         loop_breaker.append(total_size)
         # break loop if last 10 values have been consistently same, indicates problem creating files
         xor_result = 0
@@ -44,10 +62,10 @@ def create_random_files(total_size: int, min_files: int, max_files: int, dest: s
             break
     return total_created
 
-def is_unit_supported(unit: str):
+def is_unit_supported(unit: str) -> bool:
     return True if UNITS.index(unit) != -1 else False
 
-def validate_size(size: str):
+def validate_size(size: str) -> bool:
     try: 
         _, unit = int(re.match(r'(\d+)(\w+)', size)[1]), re.match(r'(\d+)(\w+)', size)[2]
         if not is_unit_supported(unit):
@@ -61,6 +79,17 @@ def in_bytes(number: int, unit: str) -> int:
     exponent = UNITS.index(unit) if UNITS.index(unit) != -1 else 1
     return math.pow(base, exponent) * number
 
+def to_si(number: int) -> str:
+    base = 1000
+    if number < base:
+        return "{} bytes".format(number)
+    div, exp = base, 1
+    n = number / base
+    while n >= base:
+        div *= base
+        exp += 1
+        n /= base
+    return "{:.2f} {}".format(number/div, UNITS[exp])
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -73,5 +102,4 @@ if __name__ == "__main__":
     size_in_bytes = in_bytes(int(size), unit)
     created = create_random_files(size_in_bytes, args.min_files, args.max_files, args.dest_dir)
     print("Created {} random files".format(created))
-    while True:
-        pass
+

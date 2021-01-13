@@ -1,17 +1,19 @@
-number_of_files: 1
-
 # size of the file in 'M' 
 # corresponds with the container env var FILE_SIZE
-file_size: 1560Gi
+file_size: 1400Gi
 
 max_files: 100000
 
-min_files: 50000
+min_files: 80000
 
 # size of the PVCs to be created to store sample files
 pvc_size: 2Ti
 
-namespace: pvc-migrate-bmark
+buffer: 2Gi
+
+namespace: dvm-benchmark
+
+pod_name: dvm-benchmark
 
 image: quay.io/pranavgaikwad/data-generator:latest
 
