@@ -77,7 +77,12 @@ def validate_size(size: str) -> bool:
 
 def scan(dest: str) -> (int, int):
     files = [os.path.join(dest, f) for f in os.listdir(dest) if os.path.isfile(os.path.join(dest, f))]
-    size = sum(os.path.getsize(f) for f in files)
+    size = 0
+    for f in files:
+        try:
+            size += os.path.getsize(f)
+        except Exception:
+            continue
     return size, len(files)
 
 def in_bytes(number: int, unit: str) -> int:

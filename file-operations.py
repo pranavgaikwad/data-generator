@@ -91,8 +91,9 @@ class FileOperations(object):
         if len(self._get_file_list().keys()) < 1:
             warn("Directory is empty or not scanned")
             return -1
-        if join(self.dir, PAUSE_SWITCH) in self._get_file_list():
-            warn("Pause switch present in the directory. Pausing until it's removed...")
+        pause = os.environ.get("PAUSE_OPERATIONS", "False")
+        if pause == "True":
+            warn("Pause switch set. Pausing until OPERATOR_PAUSE env var is set to 'False'...")
             return 0
         return self._perform(self._get_random_operation())
 
@@ -169,8 +170,6 @@ class FileOperations(object):
 
     def _delete(self, path) -> int:
         """ deletes a file """
-        if PAUSE_SWITCH in path:
-            return 0
         try:
             size = os.path.getsize(path)
             os.remove(path)
@@ -247,9 +246,10 @@ def is_unit_supported(unit: str) -> bool:
 
 def scanner(fileOps: FileOperations):
     while True:
-        time.sleep(30)
+        interval = os.environ.get("SCANNER_INTERVAL", "120")
         ok("[Scanner] Scanning destination directory")
         fileOps.scan()
+        time.sleep(int(interval))
 
 def operator(fileOps: FileOperations):
     currentExp = 0

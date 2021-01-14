@@ -39,10 +39,18 @@ It uses following command line arguments:
 
 In some of the file operations, the program may create additional data in existing files. `--buffer` option allows setting an upper limit on the additional data created by the program. 
 
-To pause the file operations, you can create a file named `__pause__` in `--dest-dir`. Once created, the file operations will be paused. They will be resumed as soon as the file is deleted.
+Sometimes, you might want to pause the file operations. You can do that by setting `PAUSE_OPERATIONS` environment variable to `True`. The operations will resume when it is set to `False`.  
 
-```sh
-touch <dest_dir>/__pause__
+The file operations has a scanner thread running in the background which periodically updates the list of the files. You can set a custom time interval for scanner using `SCANNER_INTERVAL` environment variable. By default, it is set to `120` in seconds. If the destination directory contains a huge number of files, consider setting this to a higher value. For Kubernetes deployment, both of the above environment variables are passed through configmap `settings`:
+
+```yml
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: settings
+data:
+  OPERATOR_PAUSE: False
+  SCANNER_INTERVAL: 600
 ```
 
 ## Deploy on Kubernetes
