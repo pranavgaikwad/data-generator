@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: "pvc-0"
+  name: {{ pvc_name }}
   namespace: {{ namespace }}
 spec:
   accessModes:
@@ -17,52 +17,65 @@ metadata:
   name: settings
   namespace: {{ namespace }}
 data:
+{% if pause_operations %}
+  PAUSE_OPERATIONS: "True"
+{% else %}
   PAUSE_OPERATIONS: "False"
+{% endif %}
   SCANNER_INTERVAL: "600"
 ---
-apiVersion: v1
-kind: Pod
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: {{ pod_name }}
+  name: {{ deployment_name }}
   namespace: {{ namespace }}
 spec:
-  volumes:
-  - name: "vol-0" 
-    persistentVolumeClaim:
-      claimName: "pvc-0"
-  containers:
-  - name: data-generator
-    imagePullPolicy: Always
-    image: {{ image }}
-    volumeMounts:
-    - mountPath: "/opt/mounts/mnt1"
-      name: "vol-0"
-    env:
-    - name: MAX_FILES
-      value: "{{ max_files }}"
-    - name: MIN_FILES
-      value: "{{ min_files }}"
-    - name: SIZE
-      value: "{{ file_size }}"
-    - name: ROLE
-      value: generator
-    envFrom:
-    - configMapRef:
-        name: settings
-        namespace: {{ namespace }}
-  - name: data-operator
-    imagePullPolicy: Always
-    image: {{ image }}
-    volumeMounts:
-    - mountPath: "/opt/mounts/mnt1"
-      name: "vol-0"
-    env:
-    - name: BUFFER
-      value: "{{ buffer }}"
-    - name: ROLE
-      value: operations
-    envFrom:
-    - configMapRef:
-        name: settings
-        namespace: {{ namespace }}
+  replicas: 1
+  selector:
+    matchLabels:
+      app: benchmark
+  template:
+    metadata:
+      labels:
+        app: benchmark
+    spec:
+      volumes:
+      - name: "vol-0" 
+        persistentVolumeClaim:
+          claimName: {{ pvc_name }}
+      containers:
+      - name: data-generator
+        imagePullPolicy: Always
+        image: {{ image }}
+        volumeMounts:
+        - mountPath: "/opt/mounts/mnt1"
+          name: "vol-0"
+        env:
+        - name: MAX_FILES
+          value: "{{ max_files }}"
+        - name: MIN_FILES
+          value: "{{ min_files }}"
+        - name: SIZE
+          value: "{{ file_size }}"
+        - name: ROLE
+          value: generator
+        envFrom:
+        - configMapRef:
+            name: settings
+            namespace: {{ namespace }}
+      - name: data-operator
+        imagePullPolicy: Always
+        image: {{ image }}
+        volumeMounts:
+        - mountPath: "/opt/mounts/mnt1"
+          name: "vol-0"
+        env:
+        - name: BUFFER
+          value: "{{ buffer }}"
+        - name: ROLE
+          value: operations
+        envFrom:
+        - configMapRef:
+            name: settings
+            namespace: {{ namespace }}
 

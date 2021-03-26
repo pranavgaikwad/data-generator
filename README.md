@@ -61,21 +61,21 @@ To deploy the above workloads on a Kubernetes cluster, simply run the [Ansible P
 ansible-playbook playbook.yml
 ```
 
-The above playbook will create a Pod with 2 containers, one of them runs [file-generator.py](./file-generator.py) to create random data in a Persistent Volume, while the other one runs [file-operations.py](./file-operations.py) to perform random operations on the generated data.
+The above playbook will create a deployment which launches a Pod with 2 containers, one of them runs [file-generator.py](./file-generator.py) to create random data in a Persistent Volume, while the other one runs [file-operations.py](./file-operations.py) to perform random operations on the generated data.
 
 The playbook uses [defaults.yml](./defaults.yml) for configuration. Here are the available options to configure the playbook:
 
-| Variable  	| Description                                                                                        	|
-|-----------	|----------------------------------------------------------------------------------------------------	|
-| file_size 	| Sets [--size](#generating-sample-data) option                                                      	|
-| max_files 	| Sets [--max-files](#generating-sample-data) option                                                 	|
-| min_files 	| Sets [--min-files](#generating-sample-data) option                                                 	|
-| pvc_size  	| Size of volume (needs to be greater than or equal to file_size option)                             	|
-| buffer    	| Sets [--buffer](#simulating-operations-on-sample-data) option                                      	|
-| namespace 	| Namespace for workload                                                                             	|
-| pod_name  	| Name of the workload pod                                                                           	|
-| image     	| Workload docker image (See [this section](#build-your-own-workload-image) to build your own image) 	|
-| destroy   	| Deletes the workload when set to `true`                                                            	|
+| Variable        	| Description                                                                                        	|
+|-----------------	|----------------------------------------------------------------------------------------------------	|
+| file_size       	| Sets [--size](#generating-sample-data) option                                                      	|
+| max_files       	| Sets [--max-files](#generating-sample-data) option                                                 	|
+| min_files       	| Sets [--min-files](#generating-sample-data) option                                                 	|
+| pvc_size        	| Size of volume (needs to be greater than or equal to file_size option)                             	|
+| buffer          	| Sets [--buffer](#simulating-operations-on-sample-data) option                                      	|
+| namespace       	| Namespace for workload                                                                             	|
+| deployment_name 	| Name of the workload deployment                                                                    	|
+| image           	| Workload docker image (See [this section](#build-your-own-workload-image) to build your own image) 	|
+| destroy         	| Deletes the workload when set to `true`                                                            	|
 
 ## Build your own workload image
 

@@ -1,19 +1,24 @@
 # size of the file in 'M' 
 # corresponds with the container env var FILE_SIZE
-file_size: 1400Gi
+file_size: 5Gi
 
-max_files: 100000
+max_files: 1000
 
-min_files: 80000
+min_files: 500
 
 # size of the PVCs to be created to store sample files
-pvc_size: 2Ti
+pvc_size: 6Gi
 
-buffer: 2Gi
+buffer: 10Mi
 
-namespace: dvm-benchmark
+namespace: dvm-retry-test
 
-pod_name: dvm-benchmark
+deployment_name: test-02
+
+# pause_operations pauses the random file operations
+pause_operations: true
+
+pvc_name: pvc-02
 
 image: quay.io/pranavgaikwad/data-generator:latest
 
